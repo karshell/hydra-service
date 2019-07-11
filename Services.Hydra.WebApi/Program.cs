@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace hydra_service
+namespace Services.Hydra.WebApi
 {
     public class Program
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
-namespace hydra_service.Controllers
+namespace Services.Hydra.WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
