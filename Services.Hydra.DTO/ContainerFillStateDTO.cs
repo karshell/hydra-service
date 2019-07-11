@@ -1,6 +1,6 @@
 ﻿namespace Services.Hydra.DTO
 {
-    public class FillStateDTO
+    public class ContainerFillStateDTO
     {
         public ContainerDTO Container { get; set; }
 
