@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Services.Hydra.WebApi.Configuration;
+using Services.Hydra.WebApi.NotificationStrategies;
+using Services.Hydra.WebApi.Services;
 
 namespace Services.Hydra.WebApi
 {
@@ -27,6 +30,16 @@ namespace Services.Hydra.WebApi
 
             IMapper mapper = mappingConfig.CreateMapper();
             services.AddSingleton(mapper);
+
+            services.Configure<AssistantRelaySettings>(Configuration.GetSection("AssistantRelay"));
+            services.Configure<NotificationSettings>(Configuration.GetSection("NotificationSettings"));
+            services.Configure<DataStorageOptions>(Configuration.GetSection("DataStorage"));
+
+            services.AddSingleton<INotificationStrategy, GoogleNotificationStrategy>();
+            services.AddSingleton<INotificationStrategy, EmailNotificationStrategy>();
+
+            services.AddSingleton<IDocumentStorageService, DocumentStorageService>();
+            services.AddSingleton<IFillStateService, FillStateService>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

@@ -4,6 +4,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Services.Hydra.DTO;
 using Services.Hydra.WebApi.Models;
+using Services.Hydra.WebApi.Services;
 
 namespace Services.Hydra.WebApi.Controllers
 {
@@ -12,10 +13,12 @@ namespace Services.Hydra.WebApi.Controllers
     public class FillStateController : Controller
     {
         private readonly IMapper _mapper;
+        private readonly IFillStateService _fillStateService;
 
-        public FillStateController(IMapper mapper)
+        public FillStateController(IMapper mapper, IFillStateService fillStateService)
         {
             _mapper = mapper;
+            _fillStateService = fillStateService;
         }
 
         [HttpPost]
@@ -23,7 +26,7 @@ namespace Services.Hydra.WebApi.Controllers
         {
             var container = _mapper.Map<ContainerFillState>(state);
 
-            Console.Write(container);
+            await _fillStateService.ProcessFillState(container);
 
             return Accepted();
         }
