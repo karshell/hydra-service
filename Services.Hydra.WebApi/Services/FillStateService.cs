@@ -14,7 +14,7 @@ namespace Services.Hydra.WebApi.Services
         private readonly NotificationSettings _notificationSettings;
         private readonly IDocumentStorageService _documentStorageService;
         private readonly IEnumerable<INotificationStrategy> _notificationStrategies;
-        
+
         //necessary to account for sensor inconsistencies
         private const int NumConsecutiveReadings = 10;
 
@@ -42,16 +42,26 @@ namespace Services.Hydra.WebApi.Services
             }
 
             //examine sensor history to confirm a stable state
-            IEnumerable<ContainerFillState> mostRecentStates = await _documentStorageService.GetManyAsync<ContainerFillState, DateTimeOffset>(
-                c => c.Container.ContainerId == fillState.Container.ContainerId,
-                c => c.Timestamp.Value, NumConsecutiveReadings, false);
+            IEnumerable<ContainerFillState> mostRecentStates =
+                await _documentStorageService.GetManyAsync<ContainerFillState, DateTimeOffset>(
+                    c => c.Container.ContainerId == fillState.Container.ContainerId,
+                    c => c.Timestamp.Value, NumConsecutiveReadings, false);
 
             if (mostRecentStates.All(s => !s.FillState))
             {
-                foreach (INotificationStrategy notificationStrategy in _notificationStrategies)
-                {
-                    await notificationStrategy.Notify();
-                }
+                await Notify();
+            }
+        }
+
+        private async Task Notify()
+        {
+            //record history
+            await _documentStorageService.InsertAsync<NotificationHistory>(new NotificationHistory{NotificationTime = DateTimeOffset.Now});
+
+            //notify on all notification channels
+            foreach (INotificationStrategy notificationStrategy in _notificationStrategies)
+            {
+                await notificationStrategy.Notify();
             }
         }
     }
