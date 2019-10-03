@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.Documents.Linq;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Services.Hydra.WebApi.Configuration;
 using Services.Hydra.WebApi.Models;
@@ -21,13 +22,13 @@ namespace Services.Hydra.WebApi.Services
         private readonly string _collectionId;
         private readonly PartitionKeyDefinition _partitionKeyDefinition;
 
-        public DocumentStorageService(DataStorageOptions options, string collectionId)
+        public DocumentStorageService(IOptions<DataStorageOptions> options)
         {
-            _dataStorageOptions = options;
-            _databaseUri = UriFactory.CreateDatabaseUri(options.DatabaseId);
-            _collectionUri = UriFactory.CreateDocumentCollectionUri(options.DatabaseId, collectionId);
-            _collectionId = collectionId;
-            _client = new DocumentClient(new Uri(options.EndpointAddress), options.AuthorizationKey, ConnectionPolicy.Default);
+            _dataStorageOptions = options.Value;
+            _databaseUri = UriFactory.CreateDatabaseUri(options.Value.DatabaseId);
+            _collectionUri = UriFactory.CreateDocumentCollectionUri(options.Value.DatabaseId, options.Value.CollectionId);
+            _collectionId = options.Value.CollectionId;
+            _client = new DocumentClient(new Uri(options.Value.EndpointAddress), options.Value.AuthorizationKey, ConnectionPolicy.Default);
 
             EnsureDatabaseExists();
             EnsureCollectionExists(out _partitionKeyDefinition);
@@ -45,6 +46,55 @@ namespace Services.Hydra.WebApi.Services
                 if (predicate != null)
                 {
                     queryable = queryable.Where(predicate);
+                }
+
+                using (var documentQuery = queryable.AsDocumentQuery())
+                {
+                    var results = new List<TEntity>();
+                    while (documentQuery.HasMoreResults)
+                    {
+                        var response = await documentQuery.ExecuteNextAsync<TEntity>();
+                        results.AddRange(response);
+                    }
+
+                    return results;
+                }
+            }
+            catch (DocumentClientException e)
+            {
+                Console.Write($"Unable to read details for document. {e.StatusCode}: {e.Message}");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<TEntity>> GetManyAsync<TEntity, TKey>(Expression<Func<TEntity, bool>> predicate = null,
+            Expression<Func<TEntity, TKey>> orderClause = null, int? resultLimit = null, bool ascendingSort = true) where TEntity : Entity, new()
+        {
+            var feedOptions = new FeedOptions { EnableCrossPartitionQuery = true };
+
+            try
+            {
+                IQueryable<TEntity> queryable = _client.CreateDocumentQuery<TEntity>(_collectionUri, feedOptions)
+                    .Where(s => s.TypeName == new TEntity().TypeName);
+
+                if (predicate != null)
+                {
+                    queryable = queryable.Where(predicate);
+                }
+
+                if (orderClause != null && ascendingSort)
+                {
+                    queryable = queryable.OrderBy(orderClause);
+                }
+
+                if (orderClause != null && !ascendingSort)
+                {
+                    queryable = queryable.OrderByDescending(orderClause);
+                }
+
+                if (resultLimit != null)
+                {
+                    queryable = queryable.Take(resultLimit.Value);
                 }
 
                 using (var documentQuery = queryable.AsDocumentQuery())
