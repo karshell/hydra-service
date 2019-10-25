@@ -33,7 +33,7 @@ namespace Services.Hydra.WebApi.Services
             //check if a notification has been sent recently
             NotificationHistory mostRecentNotification =
                 (await _documentStorageService.GetManyAsync<NotificationHistory, DateTimeOffset>(
-                    null, h => h.NotificationTime, 1)).FirstOrDefault();
+                    null, h => h.NotificationTime, 1, false)).FirstOrDefault();
 
             if (mostRecentNotification?.NotificationTime >=
                 DateTimeOffset.Now.Subtract(TimeSpan.FromMinutes(_notificationSettings.MinutesBetweenNotifications)))
