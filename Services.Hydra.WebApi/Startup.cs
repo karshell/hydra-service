@@ -42,6 +42,8 @@ namespace Services.Hydra.WebApi
 
             services.AddSingleton<IDocumentStorageService, DocumentStorageService>();
             services.AddSingleton<IFillStateService, FillStateService>();
+
+            services.AddHttpClient();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
