@@ -16,7 +16,8 @@ namespace Services.Hydra.WebApi.NotificationStrategies
 
         public Task Notify()
         {
-            throw new NotImplementedException();
+            //todo
+            return Task.CompletedTask;
         }
     }
 }

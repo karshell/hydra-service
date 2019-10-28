@@ -35,6 +35,7 @@ namespace Services.Hydra.WebApi
             services.Configure<AssistantRelaySettings>(Configuration.GetSection("AssistantRelay"));
             services.Configure<NotificationSettings>(Configuration.GetSection("NotificationSettings"));
             services.Configure<DataStorageOptions>(Configuration.GetSection("DataStorage"));
+            services.Configure<SendGridConfiguration>(Configuration.GetSection("SendGrid"));
 
             services.AddSingleton<INotificationStrategy, GoogleNotificationStrategy>();
             services.AddSingleton<INotificationStrategy, EmailNotificationStrategy>();
